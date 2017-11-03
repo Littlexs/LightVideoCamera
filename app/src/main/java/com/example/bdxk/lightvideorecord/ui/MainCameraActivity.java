@@ -1,26 +1,23 @@
 package com.example.bdxk.lightvideorecord.ui;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.hardware.Camera;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
+import android.net.Uri;
 import android.os.Bundle;
-import android.os.CountDownTimer;
 import android.os.Environment;
 import android.os.Handler;
-import android.os.Message;
-import android.os.SystemClock;
 import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
-import android.widget.Chronometer;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -30,16 +27,14 @@ import android.widget.Toast;
 import com.example.bdxk.lightvideorecord.R;
 import com.example.bdxk.lightvideorecord.utils.DateUtils;
 import com.example.bdxk.lightvideorecord.utils.DeviceUtils;
+import com.example.bdxk.lightvideorecord.utils.UriUtils;
 import com.example.bdxk.lightvideorecord.utils.VideoUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -77,7 +72,7 @@ public class MainCameraActivity extends AppCompatActivity implements SurfaceHold
     private SurfaceHolder surfaceHolder;
 
     private String videoUrlString;//当前视频的位置
-    private String saveUrlString="";//保存视频的最终路径
+    private String saveUrlString = "";//保存视频的最终路径
     private Camera.Size supportSize;//设置支持的分辨率
 
     private boolean isRecoding;//是否正在录制
@@ -95,6 +90,7 @@ public class MainCameraActivity extends AppCompatActivity implements SurfaceHold
         displayMetrics = DeviceUtils.getDisplay(context);
         videoWidth = displayMetrics.widthPixels;
         videoHeight = displayMetrics.heightPixels;
+
         init();
     }
 
@@ -137,31 +133,24 @@ public class MainCameraActivity extends AppCompatActivity implements SurfaceHold
         switch (view.getId()) {
             case R.id.tvStart:
                 //开始录制和暂停
-                if (isRecoding){
-                    if (isPuse){
+                if (isRecoding) {
+                    if (isPuse) {
                         if (prepareVideoRecorder()) {
                             tvStart.setText("正在录制");
                             mMediaRecorder.start();
                             runnable.run();//开始计时
                             isPuse = false;
-                        }else {
+                        } else {
                             Toast.makeText(context, "相机初始化失败", Toast.LENGTH_SHORT).show();
                         }
-                    }else {
+                    } else {
                         tvStart.setText("已暂停");
-                        mCamera.autoFocus(new Camera.AutoFocusCallback() {
-                            @Override
-                            public void onAutoFocus(boolean success, Camera camera) {
-                                if (success == true)
-                                    mCamera.cancelAutoFocus();
-                            }
-                        });
                         stopRecorder();
                         isPuse = true;
                         mHandler.removeCallbacks(runnable);
-                        if ("".equals(saveUrlString)){
+                        if ("".equals(saveUrlString)) {
                             saveUrlString = videoUrlString;
-                        }else {
+                        } else {
                             new Thread(new Runnable() {
                                 @Override
                                 public void run() {
@@ -183,7 +172,7 @@ public class MainCameraActivity extends AppCompatActivity implements SurfaceHold
                             }).start();
                         }
                     }
-                }else {
+                } else {
                     if (prepareVideoRecorder()) {
                         tvStart.setText("正在录制");
                         mMediaRecorder.start();
@@ -233,15 +222,15 @@ public class MainCameraActivity extends AppCompatActivity implements SurfaceHold
         }
         try {
             mCamera.setPreviewDisplay(surfaceHolder);
-            //配置CameraParams
-            setCameraParams();
-            //启动相机预览
-            mCamera.startPreview();
             List<Camera.Size> sizeList = getSupportedVideoSizes(mCamera);
             for (Camera.Size s : sizeList) {
                 Log.i(TAG, s.height + "  " + s.width);
             }
             supportSize = sizeList.get(sizeList.size() / 2);
+            //配置CameraParams
+            setCameraParams();
+            //启动相机预览
+            mCamera.startPreview();
         } catch (IOException e) {
             Log.d(TAG, "Error starting camera preview: " + e.getMessage());
         }
@@ -249,9 +238,6 @@ public class MainCameraActivity extends AppCompatActivity implements SurfaceHold
 
     /**
      * 设置摄像头为竖屏
-     *
-     * @author lip
-     * @date 2015-3-16
      */
     private void setCameraParams() {
         if (mCamera != null) {
@@ -271,6 +257,7 @@ public class MainCameraActivity extends AppCompatActivity implements SurfaceHold
             //影像稳定能力
             if (params.isVideoStabilizationSupported())
                 params.setVideoStabilization(true);
+            params.setPreviewSize(supportSize.width, supportSize.height);
             mCamera.setParameters(params);
         } else {
             Toast.makeText(context, "未找到相机", Toast.LENGTH_SHORT).show();
@@ -289,19 +276,7 @@ public class MainCameraActivity extends AppCompatActivity implements SurfaceHold
         }
     }
 
-    /**
-     * 停止Camera
-     */
-    private void stopCamera() {
-        if (mCamera != null) {
-            mCamera.setPreviewCallback(null);
-            mCamera.stopPreview();
-            mCamera.release();
-            mCamera = null;
-        }
-    }
-
-    @OnClick({R.id.tvFinish, R.id.tvDel})
+    @OnClick({R.id.tvFinish, R.id.tvDel,R.id.tvImport})
     public void option(View view) {
         switch (view.getId()) {
             case R.id.tvFinish://完成录制
@@ -312,10 +287,10 @@ public class MainCameraActivity extends AppCompatActivity implements SurfaceHold
                 tvStart.setText("开始");
                 longmillTime = 0;
                 mHandler.removeCallbacks(runnable);
-                if (!isPuse){
-                    Log.i(TAG,"   直接结束");
-                    if (!"".equals(saveUrlString)){
-                        Log.i(TAG,saveUrlString);
+                if (!isPuse) {
+                    Log.i(TAG, "   直接结束");
+                    if (!"".equals(saveUrlString)) {
+                        Log.i(TAG, saveUrlString);
                         new Thread(new Runnable() {
                             @Override
                             public void run() {
@@ -337,8 +312,8 @@ public class MainCameraActivity extends AppCompatActivity implements SurfaceHold
                             }
                         }).start();
                     }
-                }else {
-                    Log.i(TAG,"   暂停中结束");
+                } else {
+                    Log.i(TAG, "   暂停中结束");
                 }
                 isPuse = false;
                 isRecoding = false;
@@ -365,7 +340,62 @@ public class MainCameraActivity extends AppCompatActivity implements SurfaceHold
 //                layoutRecod.startAnimation(animation);
                 break;
             case R.id.tvDel://删除视频
+                if (isRecoding) {
+                    stopRecorder();
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (!"".equals(saveUrlString)) {
+                                File reName = new File(saveUrlString);
+                                if (reName.exists()) {
+                                    reName.delete();
+                                }
+                            }
+                            new File(videoUrlString).delete();
+                            saveUrlString = "";
+                        }
+                    }).start();
+                    tvStart.setText("开始");
+                    mHandler.removeCallbacks(runnable);
+                    tvUseTime.setText("00:00:0");
+                    tvFinish.setVisibility(View.GONE);
+                    tvDel.setVisibility(View.GONE);
+                }
                 break;
+            case R.id.tvImport:
+                if (isRecoding){
+                    Toast.makeText(context,"已保存",Toast.LENGTH_SHORT).show();
+                    stopRecorder();
+                    stopCamera();
+                }
+                Intent pickIntent = new Intent(Intent.ACTION_GET_CONTENT);
+                pickIntent.setType("video/*");
+                pickIntent.addCategory(Intent.CATEGORY_OPENABLE);
+                startActivityForResult(pickIntent, 1);
+                break;
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+        if(resultCode != RESULT_OK) return;
+
+        Uri selectedMediaUri = data.getData();
+
+        String path = UriUtils.getFileAbsolutePath(getApplicationContext(),selectedMediaUri);
+
+        if(!TextUtils.isEmpty(path))
+        {
+            Toast.makeText(context,path,Toast.LENGTH_SHORT).show();
+//            Intent intent = new Intent(this, MoviePreviewAndCutActivity.class);
+//            intent.putExtra("videoPath", path);
+//            startActivity(intent);
+        }
+        else
+        {
+            //视频路径为空
+            Toast.makeText(context,"视频路径为空",Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -422,6 +452,7 @@ public class MainCameraActivity extends AppCompatActivity implements SurfaceHold
 
     /**
      * 设置输出文件夹
+     *
      * @return
      */
     private String getOutputMediaFile() {
@@ -442,10 +473,7 @@ public class MainCameraActivity extends AppCompatActivity implements SurfaceHold
             e.printStackTrace();
         }
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        File mediaFile = new File(eis.getPath() + File.separator +
-                "VID_" + timeStamp + ".mp4");
-        Log.i(TAG, mediaFile.getAbsolutePath());
-        return mediaFile.toString();
+        return eis.getPath() + File.separator +"VID_" + timeStamp + ".mp4";
     }
 
     private void stopRecorder() {
@@ -459,6 +487,19 @@ public class MainCameraActivity extends AppCompatActivity implements SurfaceHold
             //释放资源
             mMediaRecorder.release();
             mMediaRecorder = null;
+        }
+    }
+
+    /**
+     * 停止Camera
+     */
+    private void stopCamera() {
+        if (mCamera != null) {
+            mCamera.lock();
+            mCamera.setPreviewCallback(null);
+            mCamera.stopPreview();
+            mCamera.release();
+            mCamera = null;
         }
     }
 }
