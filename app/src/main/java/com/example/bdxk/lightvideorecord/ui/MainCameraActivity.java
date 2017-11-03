@@ -3,8 +3,13 @@ package com.example.bdxk.lightvideorecord.ui;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.drawable.Drawable;
 import android.hardware.Camera;
 import android.media.CamcorderProfile;
+import android.media.MediaMetadataRetriever;
 import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Bundle;
@@ -33,6 +38,7 @@ import com.example.bdxk.lightvideorecord.utils.VideoUtils;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -257,7 +263,7 @@ public class MainCameraActivity extends AppCompatActivity implements SurfaceHold
             //影像稳定能力
             if (params.isVideoStabilizationSupported())
                 params.setVideoStabilization(true);
-            params.setPreviewSize(supportSize.width, supportSize.height);
+            params.setPreviewSize(supportSize.width, supportSize.height);//相机画面拉伸，待解决
             mCamera.setParameters(params);
         } else {
             Toast.makeText(context, "未找到相机", Toast.LENGTH_SHORT).show();
@@ -305,12 +311,13 @@ public class MainCameraActivity extends AppCompatActivity implements SurfaceHold
                                         f.delete();
                                         new File(videoUrlString).delete();
                                     }
-                                    saveUrlString = "";
                                 } catch (IOException e) {
                                     e.printStackTrace();
                                 }
                             }
                         }).start();
+                    }else {
+                        saveUrlString = videoUrlString;
                     }
                 } else {
                     Log.i(TAG, "   暂停中结束");
@@ -380,23 +387,35 @@ public class MainCameraActivity extends AppCompatActivity implements SurfaceHold
     public void onActivityResult(int requestCode, int resultCode, Intent data)
     {
         if(resultCode != RESULT_OK) return;
-
         Uri selectedMediaUri = data.getData();
-
         String path = UriUtils.getFileAbsolutePath(getApplicationContext(),selectedMediaUri);
-
-        if(!TextUtils.isEmpty(path))
-        {
+        if(!TextUtils.isEmpty(path)) {
             Toast.makeText(context,path,Toast.LENGTH_SHORT).show();
-//            Intent intent = new Intent(this, MoviePreviewAndCutActivity.class);
-//            intent.putExtra("videoPath", path);
-//            startActivity(intent);
-        }
-        else
-        {
+//            stopCamera();  ///相机预览时不可更新UI，再修改
+//            List<Bitmap> bitmapList = getFlameBitmap(path,100);
+//            Canvas canvas = surfaceHolder.lockCanvas();
+//            canvas.drawBitmap(bitmapList.get(2),0,0,new Paint(Paint.ANTI_ALIAS_FLAG));
+//            surfaceHolder.unlockCanvasAndPost(canvas);
+        } else {
             //视频路径为空
             Toast.makeText(context,"视频路径为空",Toast.LENGTH_SHORT).show();
         }
+    }
+
+    //获取视频帧
+    private List<Bitmap> getFlameBitmap(String path,long timeMs){
+        List<Bitmap> bitmapList = new ArrayList<>();
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+        retriever.setDataSource(path);
+        String fileLength = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+        Log.i(TAG, "fileLength : "+fileLength);
+        long vLong = Long.parseLong(fileLength);
+        timeMs = vLong/14;//取10张
+        for (int i = 0;i<vLong;i+=timeMs){
+            Bitmap bitmap = retriever.getFrameAtTime(timeMs * 1000, MediaMetadataRetriever.OPTION_CLOSEST);
+            bitmapList.add(bitmap);
+        }
+        return bitmapList;
     }
 
     @Override
