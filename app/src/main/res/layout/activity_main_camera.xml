@@ -6,52 +6,68 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:id="@+id/rootLayout"
+    android:background="#666"
     tools:context="com.example.bdxk.lightvideorecord.ui.MainCameraActivity">
     <SurfaceView
+        android:id="@+id/surFaceView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"/>
-    <RelativeLayout
-        android:id="@+id/layout_recod"
-        android:orientation="vertical"
+    <FrameLayout
+        android:id="@+id/bottomLayout"
         android:layout_width="match_parent"
         android:layout_height="160dp">
-        <TextView
-            android:id="@+id/tvStart"
-            android:gravity="center"
-            android:text="开始"
-            android:padding="10dp"
-            android:textColor="@android:color/white"
-            android:textSize="18sp"
-            android:background="@android:color/darker_gray"
-            android:layout_centerInParent="true"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-        <TextView
-            android:textSize="14sp"
-            android:text="导入"
-            android:padding="10dp"
-            android:layout_marginLeft="10dp"
-            android:layout_centerVertical="true"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-    </RelativeLayout>
-    <RelativeLayout
-        android:id="@+id/layout_edit"
-        android:visibility="gone"
-        android:orientation="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="160dp">
-        <TextView
-            android:id="@+id/tvNext"
-            android:gravity="center"
-            android:text="滑动选择一张截图"
-            android:padding="10dp"
-            android:textColor="@android:color/white"
-            android:textSize="18sp"
-            android:background="@android:color/darker_gray"
-            android:layout_centerInParent="true"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-    </RelativeLayout>
+        <RelativeLayout
+            android:id="@+id/layout_recod"
+            android:background="@android:color/white"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="160dp">
+            <TextView
+                android:id="@+id/tvUseTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+            <TextView
+                android:id="@+id/tvStart"
+                android:gravity="center"
+                android:text="开始"
+                android:padding="10dp"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:background="@android:color/darker_gray"
+                android:layout_centerInParent="true"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+            <TextView
+                android:id="@+id/tvFinish"
+                android:text="完成 》"
+                android:textSize="14sp"
+                android:padding="8dp"
+                android:visibility="gone"
+                android:layout_marginLeft="20dp"
+                android:layout_toRightOf="@+id/tvStart"
+                android:layout_centerVertical="true"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+            <TextView
+                android:id="@+id/tvDel"
+                android:text="《 删除"
+                android:textSize="14sp"
+                android:padding="8dp"
+                android:visibility="gone"
+                android:layout_marginRight="20dp"
+                android:layout_toLeftOf="@+id/tvStart"
+                android:layout_centerVertical="true"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+            <TextView
+                android:textSize="14sp"
+                android:text="导入"
+                android:padding="10dp"
+                android:layout_marginLeft="10dp"
+                android:layout_centerVertical="true"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </RelativeLayout>
+    </FrameLayout>
 </LinearLayout>

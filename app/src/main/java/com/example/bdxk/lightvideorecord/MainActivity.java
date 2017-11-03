@@ -1,8 +1,13 @@
 package com.example.bdxk.lightvideorecord;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 
 import com.example.bdxk.lightvideorecord.ui.MainCameraActivity;
@@ -16,7 +21,64 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void goRecoding(View view) {
-        Intent intent = new Intent(MainActivity.this, MainCameraActivity.class);
-        startActivity(intent);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED
+                ||
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                        != PackageManager.PERMISSION_GRANTED
+                ||
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        != PackageManager.PERMISSION_GRANTED
+                ||
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                        != PackageManager.PERMISSION_GRANTED) {
+            // 权限未被授予
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.CAMERA)) {
+                // 如果访问了，但是没有被授予权限，则需要告诉用户，使用此权限的好处
+                Log.i("-----", "CAMERA   申请权限说明！");
+            }else if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.RECORD_AUDIO)) {
+                // 如果访问了，但是没有被授予权限，则需要告诉用户，使用此权限的好处
+                Log.i("-----", "RECORD_AUDIO   申请权限说明！");
+            } else if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                // 如果访问了，但是没有被授予权限，则需要告诉用户，使用此权限的好处
+                Log.i("-----", "WRITE_EXTERNAL_STORAGE   申请权限说明！");
+            } else if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                // 如果访问了，但是没有被授予权限，则需要告诉用户，使用此权限的好处
+                Log.i("-----", "READ_EXTERNAL_STORAGE   申请权限说明！");
+            }else {
+                // 第一次申请，就直接申请
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA,
+                                Manifest.permission.RECORD_AUDIO,
+                                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                                Manifest.permission.READ_EXTERNAL_STORAGE},
+                        1002);
+            }
+        }else {
+            Intent intent = new Intent(MainActivity.this, MainCameraActivity.class);
+            startActivity(intent);
+        }
+    }
+
+
+    /**
+     * 申请权限的回调，
+     *
+     * @param requestCode  requestCode
+     * @param permissions  permissions
+     * @param grantResults grantResults 多个权限一起返回
+     */
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        if (requestCode==1002){
+            Intent intent = new Intent(MainActivity.this, MainCameraActivity.class);
+            startActivity(intent);
+        }else {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
     }
 }
