@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.View;
 
 import com.example.bdxk.lightvideorecord.ui.GetFlameActivity;
+import com.example.bdxk.lightvideorecord.ui.LightVideoActivity;
 import com.example.bdxk.lightvideorecord.ui.MainCameraActivity;
 
 public class MainActivity extends AppCompatActivity {
@@ -54,11 +55,10 @@ public class MainActivity extends AppCompatActivity {
                         1002);
             }
         }else {
-            Intent intent = new Intent(MainActivity.this, GetFlameActivity.class);
+            Intent intent = new Intent(MainActivity.this, LightVideoActivity.class);
             startActivity(intent);
         }
     }
-
 
     /**
      * 申请权限的回调，

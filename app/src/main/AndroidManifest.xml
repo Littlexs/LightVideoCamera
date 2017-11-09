@@ -28,7 +28,9 @@
             </intent-filter>
         </activity>
         <activity android:name=".ui.MainCameraActivity" />
-        <activity android:name=".ui.GetFlameActivity"></activity>
+        <activity android:name=".ui.GetFlameActivity" />
+        <activity android:name=".ui.LightVideoActivity"
+            android:screenOrientation="portrait"/>
     </application>
 
 </manifest>
