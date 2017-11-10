@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.hardware.Camera;
+import android.media.CamcorderProfile;
+import android.media.MediaRecorder;
 import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -33,6 +35,7 @@ public class CameraPreviewSurface extends SurfaceView implements SurfaceHolder.C
     private Context context;
     private boolean isCreate;
     private int faceType;//相机前置与后置
+    private MediaRecorder mMediaRecorder;
 
     public CameraPreviewSurface(Context context) {
         super(context);
@@ -168,6 +171,75 @@ public class CameraPreviewSurface extends SurfaceView implements SurfaceHolder.C
         }
     }
 
+    /**
+     * 配置MediaRecorder()
+     */
+    public boolean prepareVideoRecorder() {
+        startPreView(faceType);
+        mMediaRecorder = new MediaRecorder();
+        mCamera.unlock();
+        mMediaRecorder.setCamera(mCamera);
+        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+        //2.设置视频，音频的输出格式 mp4
+        mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.DEFAULT);
+        //3.设置音频的编码格式
+        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+        //设置图像的编码格式
+        mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
+        //音频一秒钟包含多少数据位
+        CamcorderProfile mProfile = CamcorderProfile.get(CamcorderProfile.QUALITY_480P);
+        mMediaRecorder.setAudioEncodingBitRate(44100);
+        if (mProfile.videoBitRate > 2 * 1024 * 1024)
+            mMediaRecorder.setVideoEncodingBitRate(2 * 1024 * 1024);
+        else
+            mMediaRecorder.setVideoEncodingBitRate(1024 * 1024);
+        mMediaRecorder.setVideoFrameRate(mProfile.videoFrameRate);
+        //设置选择角度，顺时针方向，因为默认是逆向90度的，这样图像就是正常显示了,这里设置的是观看保存后的视频的角度
+        mMediaRecorder.setOrientationHint(90);
+        //设置录像的分辨率 ---  一定要是设备支持的分辨路，否则会start失败（-19）
+        if (bestSupportSize!=null){
+            mMediaRecorder.setVideoSize(bestSupportSize.width, bestSupportSize.height);
+        }else if (bestWrapCameraSize!=null){
+            mMediaRecorder.setVideoSize(bestWrapCameraSize.getWidth(), bestWrapCameraSize.getHeight());
+        }else {
+            Log.d(TAG, "no SupportSize");
+            return false;
+        }
+        videoUrlString = UriUtils.getOutputMediaFile();
+        mMediaRecorder.setOutputFile(videoUrlString);
+        mMediaRecorder.setPreviewDisplay(mHolder.getSurface());
+        try {
+            mMediaRecorder.prepare();
+        } catch (IllegalStateException e) {
+            Log.d(TAG, "IllegalStateException preparing MediaRecorder: " + e.getMessage());
+            stopRecorder();
+            return false;
+        } catch (IOException e) {
+            Log.d(TAG, "IOException preparing MediaRecorder: " + e.getMessage());
+            stopRecorder();
+            return false;
+        }
+        return true;
+    }
+
+
+    /**
+     * 停止录制
+     */
+    public void stopRecorder() {
+        if (mMediaRecorder != null) {
+            // 设置后不会崩
+            mMediaRecorder.setOnErrorListener(null);
+            mMediaRecorder.setPreviewDisplay(null);
+            //停止录制
+            mMediaRecorder.stop();
+            mMediaRecorder.reset();
+            //释放资源
+            mMediaRecorder.release();
+            mMediaRecorder = null;
+        }
+    }
 
     /**
      * 设置相机方向---旋转时
@@ -175,7 +247,7 @@ public class CameraPreviewSurface extends SurfaceView implements SurfaceHolder.C
      * @param cameraIo
      * @param camera
      */
-    public void setCameraDisplayOrientation(Activity activity, int cameraIo, Camera camera){
+    private void setCameraDisplayOrientation(Activity activity, int cameraIo, Camera camera){
         Camera.CameraInfo info=new Camera.CameraInfo();
         Camera.getCameraInfo(cameraIo,info);
         int rotation=activity.getWindowManager().getDefaultDisplay().getRotation();
@@ -210,7 +282,7 @@ public class CameraPreviewSurface extends SurfaceView implements SurfaceHolder.C
      * @param width
      * @param height
      */
-    public void setCameraSize(Camera.Parameters parameters, int width, int height) {
+    private void setCameraSize(Camera.Parameters parameters, int width, int height) {
         Map<String, List<Camera.Size>> allSizes = new HashMap<>();
         String typePreview = "typePreview";
         String typePicture = "typePicture";
