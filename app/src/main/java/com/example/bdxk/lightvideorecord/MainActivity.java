@@ -9,8 +9,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-
-import com.example.bdxk.lightvideorecord.menudemo.DemoActivity;
+ 
+import com.example.bdxk.lightvideorecord.menudemo.DemoActivity; 
+import com.example.bdxk.lightvideorecord.ui.GetFlameActivity;
+import com.example.bdxk.lightvideorecord.ui.LightVideoActivity; 
 import com.example.bdxk.lightvideorecord.ui.MainCameraActivity;
 import com.example.bdxk.lightvideorecord.ui.TestActivity;
 
@@ -37,35 +39,28 @@ public class MainActivity extends AppCompatActivity {
             // 权限未被授予
             if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                     Manifest.permission.CAMERA)) {
-                // 如果访问了，但是没有被授予权限，则需要告诉用户，使用此权限的好处
                 Log.i("-----", "CAMERA   申请权限说明！");
             }else if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                     Manifest.permission.RECORD_AUDIO)) {
-                // 如果访问了，但是没有被授予权限，则需要告诉用户，使用此权限的好处
                 Log.i("-----", "RECORD_AUDIO   申请权限说明！");
             } else if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                     Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-                // 如果访问了，但是没有被授予权限，则需要告诉用户，使用此权限的好处
                 Log.i("-----", "WRITE_EXTERNAL_STORAGE   申请权限说明！");
             } else if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                     Manifest.permission.READ_EXTERNAL_STORAGE)) {
-                // 如果访问了，但是没有被授予权限，则需要告诉用户，使用此权限的好处
                 Log.i("-----", "READ_EXTERNAL_STORAGE   申请权限说明！");
             }else {
-                // 第一次申请，就直接申请
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA,
                                 Manifest.permission.RECORD_AUDIO,
                                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
                                 Manifest.permission.READ_EXTERNAL_STORAGE},
                         1002);
             }
-        }else {
-            Intent intent = new Intent(MainActivity.this, MainCameraActivity.class);
-            //Intent intent = new Intent(MenuMainActivity.this, TestActivity.class);
+        }else { 
+            Intent intent = new Intent(MainActivity.this, LightVideoActivity.class); 
             startActivity(intent);
         }
     }
-
 
     /**
      * 申请权限的回调，
@@ -78,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
         if (requestCode==1002){
-            Intent intent = new Intent(MainActivity.this, MainCameraActivity.class);
+            Intent intent = new Intent(MainActivity.this, GetFlameActivity.class);
             startActivity(intent);
         }else {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);

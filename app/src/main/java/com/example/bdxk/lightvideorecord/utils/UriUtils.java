@@ -8,6 +8,12 @@ import android.net.Uri;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.util.Log;
+import android.widget.Toast;
+
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * Uri转换工具类
@@ -133,5 +139,31 @@ public class UriUtils
 	public static boolean isGooglePhotosUri(Uri uri)
 	{
 		return "com.google.android.apps.photos.content".equals(uri.getAuthority());
+	}
+
+	/**
+	 * 设置输出文件夹
+	 *
+	 * @return
+	 */
+	public static String getOutputMediaFile() {
+		File sdDir = null;
+		boolean sdCardExist = Environment.getExternalStorageState().equals(
+				Environment.MEDIA_MOUNTED); // 判断sd卡是否存在
+		if (sdCardExist) {
+			sdDir = Environment.getExternalStorageDirectory();
+		} else if (!sdCardExist) {
+			Log.i("UriUtils","没有内存卡");
+		}
+		File eis = new File(sdDir.toString() + "/BDXK/");
+		try {
+			if (!eis.exists()) {
+				eis.mkdir();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+		return eis.getPath() + File.separator +"VID_" + timeStamp + ".mp4";
 	}
 }
