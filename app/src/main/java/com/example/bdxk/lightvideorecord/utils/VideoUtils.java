@@ -1,6 +1,7 @@
 package com.example.bdxk.lightvideorecord.utils;
 
 import android.content.Context;
+import android.hardware.Camera;
 import android.media.MediaMetadataRetriever;
 
 import com.coremedia.iso.boxes.Container;
@@ -249,5 +250,4 @@ public final class VideoUtils {
 		 * - 1];
 		 *//*
     }*/
-
 }

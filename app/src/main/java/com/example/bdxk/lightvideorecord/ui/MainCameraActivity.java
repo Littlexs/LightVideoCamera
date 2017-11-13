@@ -5,7 +5,10 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.PixelFormat;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.hardware.Camera;
 import android.media.CamcorderProfile;
@@ -15,6 +18,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
@@ -37,6 +41,7 @@ import com.example.bdxk.lightvideorecord.utils.VideoUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -79,6 +84,7 @@ public class MainCameraActivity extends AppCompatActivity implements SurfaceHold
 
     private String videoUrlString;//当前视频的位置
     private String saveUrlString = "";//保存视频的最终路径
+    private String selectPath="";//选择的视频地址
     private Camera.Size supportSize;//设置支持的分辨率
 
     private boolean isRecoding;//是否正在录制
@@ -104,17 +110,17 @@ public class MainCameraActivity extends AppCompatActivity implements SurfaceHold
      * 初始化
      */
     private void init() {
-        layoutEdit = (RelativeLayout) layoutInflater.inflate(R.layout.recod_edit, null, false);
+        layoutEdit = (RelativeLayout) layoutInflater.inflate(R.layout.recod_edit, null);
         surfaceHolder = surface.getHolder();
-        surfaceHolder.setFixedSize(videoWidth, videoHeight);
-        surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         surfaceHolder.setKeepScreenOn(true);
         surfaceHolder.addCallback(this);
 
         mHandler = new Handler();
+        surfaceHandler = new MyHandler(this);
+
     }
 
-    private Handler mHandler;
+    private Handler mHandler,surfaceHandler;
 
     Runnable runnable = new Runnable() {
         @Override
@@ -179,6 +185,7 @@ public class MainCameraActivity extends AppCompatActivity implements SurfaceHold
                         }
                     }
                 } else {
+                    clearSurfaceDraw();
                     if (prepareVideoRecorder()) {
                         tvStart.setText("正在录制");
                         mMediaRecorder.start();
@@ -197,16 +204,67 @@ public class MainCameraActivity extends AppCompatActivity implements SurfaceHold
     @Override
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
         this.surfaceHolder = surfaceHolder;
+        surfaceHolder.setFormat(PixelFormat.OPAQUE);
+        surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+        Log.i(TAG," ----------- surfaceCreated  "+surfaceHolder);
+        if ("".equals(selectPath)){
+            startPreView();
+        }else {
+            Toast.makeText(context, "加载中...", Toast.LENGTH_SHORT).show();
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    bitmapList = getFlameBitmap(selectPath,100);
+                    surfaceHandler.sendEmptyMessage(1);
+                }
+            }).start();
+        }
+    }
+
+    private List<Bitmap> bitmapList;
+    static class MyHandler extends Handler{
+        WeakReference<MainCameraActivity> mActivity;
+        public MyHandler(MainCameraActivity activity) {
+            mActivity = new WeakReference<MainCameraActivity>(activity);
+        }
+        @Override
+        public void handleMessage(Message msg) {
+            MainCameraActivity mainActivity = mActivity.get();
+            if(msg.what==1){
+                Canvas canvas = mainActivity.surface.getHolder().lockCanvas();
+                if (mainActivity.bitmapList==null || mainActivity.bitmapList.size()==0){
+                    Toast.makeText(mainActivity, "获取缩略图失败！", Toast.LENGTH_SHORT).show();
+                }else {
+                    canvas.drawBitmap(mainActivity.bitmapList.get(2),0,0,new Paint(Paint.ANTI_ALIAS_FLAG));
+                    mainActivity.surfaceHolder.unlockCanvasAndPost(canvas);
+                }
+                Toast.makeText(mainActivity, "加载完成", Toast.LENGTH_SHORT).show();
+            }
+        }
+    };
+    List<Camera.Size> sizeList;
+    Camera.Size optimalSize;
+    @Override
+    public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
+        Log.i(TAG," ----------- surfaceChanged  "+surfaceHolder);
+        if (surfaceHolder.getSurface() == null) {
+            // preview surface does not exist
+            return;
+        }
+        // stop preview before making changes
+        try {
+            mCamera.stopPreview();
+        } catch (Exception e) {
+        }
+        optimalSize = getOptimalPreviewSize(sizeList, surface.getWidth(), surface.getHeight());
+        Camera.Parameters params = mCamera.getParameters();
+        params.setPreviewSize(optimalSize.width, optimalSize.height);
         startPreView();
     }
 
     @Override
-    public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
-
-    }
-
-    @Override
     public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
+        Log.i(TAG," ----------- surfaceDestroyed  "+surfaceHolder);
         stopRecorder();
         stopCamera();
     }
@@ -216,7 +274,6 @@ public class MainCameraActivity extends AppCompatActivity implements SurfaceHold
      */
     private void startPreView() {
         Log.d(TAG, "startPreView: ");
-        stopCamera();
         if (mCamera != null) {
             stopCamera();
         }
@@ -228,11 +285,6 @@ public class MainCameraActivity extends AppCompatActivity implements SurfaceHold
         }
         try {
             mCamera.setPreviewDisplay(surfaceHolder);
-            List<Camera.Size> sizeList = getSupportedVideoSizes(mCamera);
-            for (Camera.Size s : sizeList) {
-                Log.i(TAG, s.height + "  " + s.width);
-            }
-            supportSize = sizeList.get(sizeList.size() / 2);
             //配置CameraParams
             setCameraParams();
             //启动相机预览
@@ -263,13 +315,51 @@ public class MainCameraActivity extends AppCompatActivity implements SurfaceHold
             //影像稳定能力
             if (params.isVideoStabilizationSupported())
                 params.setVideoStabilization(true);
-            params.setPreviewSize(supportSize.width, supportSize.height);//相机画面拉伸，待解决
+            sizeList = getSupportedVideoSizes(mCamera);
+            supportSize = sizeList.get(sizeList.size() / 2);//获取支持分辨率的中间值，个人做法
             mCamera.setParameters(params);
         } else {
             Toast.makeText(context, "未找到相机", Toast.LENGTH_SHORT).show();
         }
     }
+    //这里是预览图尺寸处理的方法，就是在这把宽高调换，就可以达到效果
+    private Camera.Size getOptimalPreviewSize(List<Camera.Size> sizes, int w, int h) {
+        final double ASPECT_TOLERANCE = 0.05;
+        double targetRatio = (double) w / h;
+        if (sizes == null)
+            return null;
 
+        Camera.Size optimalSize = null;
+        double minDiff = Double.MAX_VALUE;
+
+        int targetHeight = h;
+
+        // Try to find an size match aspect ratio and size
+        for (Camera.Size size : sizes) {
+//                double ratio = (double) size.width / size.height;
+            double ratio = (double) size.height / size.width;
+            if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE)
+                continue;
+            if (Math.abs(size.width - targetHeight) < minDiff) {
+                optimalSize = size;
+                minDiff = Math.abs(size.width - targetHeight);
+            }
+        }
+
+        // Cannot find the one match the aspect ratio, ignore the
+        // requirement
+        if (optimalSize == null) {
+            minDiff = Double.MAX_VALUE;
+            for (Camera.Size size : sizes) {
+                if (Math.abs(size.width - targetHeight) < minDiff) {
+                    optimalSize = size;
+                    minDiff = Math.abs(size.width - targetHeight);
+                }
+            }
+        }
+
+        return optimalSize;
+    }
     /**
      * @param camera
      * @return 获取设备支持的分辨率
@@ -371,7 +461,6 @@ public class MainCameraActivity extends AppCompatActivity implements SurfaceHold
                 break;
             case R.id.tvImport:
                 if (isRecoding){
-                    Toast.makeText(context,"已保存",Toast.LENGTH_SHORT).show();
                     stopRecorder();
                     stopCamera();
                 }
@@ -390,12 +479,8 @@ public class MainCameraActivity extends AppCompatActivity implements SurfaceHold
         Uri selectedMediaUri = data.getData();
         String path = UriUtils.getFileAbsolutePath(getApplicationContext(),selectedMediaUri);
         if(!TextUtils.isEmpty(path)) {
-            Toast.makeText(context,path,Toast.LENGTH_SHORT).show();
-//            stopCamera();  ///相机预览时不可更新UI，再修改
-//            List<Bitmap> bitmapList = getFlameBitmap(path,100);
-//            Canvas canvas = surfaceHolder.lockCanvas();
-//            canvas.drawBitmap(bitmapList.get(2),0,0,new Paint(Paint.ANTI_ALIAS_FLAG));
-//            surfaceHolder.unlockCanvasAndPost(canvas);
+            Log.i(TAG," ------ selectPath "+path);
+            selectPath = path;
         } else {
             //视频路径为空
             Toast.makeText(context,"视频路径为空",Toast.LENGTH_SHORT).show();
@@ -422,6 +507,7 @@ public class MainCameraActivity extends AppCompatActivity implements SurfaceHold
     protected void onDestroy() {
         super.onDestroy();
         mHandler.removeCallbacks(runnable);
+        surfaceHandler.removeCallbacks(null);
     }
 
     /**
@@ -515,10 +601,30 @@ public class MainCameraActivity extends AppCompatActivity implements SurfaceHold
     private void stopCamera() {
         if (mCamera != null) {
             mCamera.lock();
+            try {
+                mCamera.setPreviewDisplay(null);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             mCamera.setPreviewCallback(null);
             mCamera.stopPreview();
             mCamera.release();
             mCamera = null;
+        }
+    }
+
+    public void clearSurfaceDraw(){
+        Canvas canvas = null;
+        try{
+            canvas = surfaceHolder.lockCanvas(null);
+            canvas.drawColor(Color.WHITE);
+            canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.SRC);
+        }catch(Exception e){
+
+        }finally{
+            if(canvas != null){
+                surfaceHolder.unlockCanvasAndPost(canvas);
+            }
         }
     }
 }
