@@ -16,15 +16,5 @@
         android:padding="10dp"
         android:textSize="16sp" />
 
-    <TextView
-        android:id="@+id/tvSelect"
-        android:textSize="16sp"
-        android:text="选择框"
-        android:padding="10dp"
-        android:onClick="toSelect"
-        android:layout_marginTop="10dp"
-        android:background="@color/text_color_gey_white"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
 
 </LinearLayout>

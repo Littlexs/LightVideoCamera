@@ -9,12 +9,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
- 
-import com.example.bdxk.lightvideorecord.menudemo.DemoActivity; 
+
 import com.example.bdxk.lightvideorecord.ui.GetFlameActivity;
-import com.example.bdxk.lightvideorecord.ui.LightVideoActivity; 
-import com.example.bdxk.lightvideorecord.ui.MainCameraActivity;
-import com.example.bdxk.lightvideorecord.ui.TestActivity;
+import com.example.bdxk.lightvideorecord.ui.LightVideoActivity;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -78,9 +75,5 @@ public class MainActivity extends AppCompatActivity {
         }else {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
-    }
-
-    public void toSelect(View view) {
-        startActivity(new Intent(MainActivity.this, DemoActivity.class));
     }
 }
