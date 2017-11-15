@@ -161,7 +161,7 @@ public class CameraPreviewSurface extends SurfaceView implements SurfaceHolder.C
     /**
      * 停止Camera
      */
-    private void stopCamera() {
+    public void stopCamera() {
         if (mCamera != null) {
             mCamera.lock();
             mCamera.setPreviewCallback(null);
@@ -223,6 +223,13 @@ public class CameraPreviewSurface extends SurfaceView implements SurfaceHolder.C
         return true;
     }
 
+    public MediaRecorder getmMediaRecorder(){
+        return mMediaRecorder;
+    }
+
+    public String getVideoUrlString() {
+        return videoUrlString;
+    }
 
     /**
      * 停止录制

@@ -16,58 +16,64 @@
         android:src="@mipmap/change"
         android:layout_width="40dp"
         android:layout_height="40dp" />
-    <RelativeLayout
-        android:id="@+id/layout_recod"
+    <FrameLayout
+        android:id="@+id/bottomLayout"
+        android:background="@color/gray"
         android:layout_alignParentBottom="true"
-        android:background="@android:color/white"
         android:layout_width="match_parent"
         android:layout_height="160dp">
-        <TextView
-            android:id="@+id/tvUseTime"
-            android:padding="10dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+        <RelativeLayout
+            android:id="@+id/layout_recod"
+            android:background="@android:color/white"
+            android:layout_width="match_parent"
+            android:layout_height="160dp">
+            <TextView
+                android:id="@+id/tvUseTime"
+                android:padding="10dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
 
-        <ImageView
-            android:id="@+id/imgStart"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:layout_centerInParent="true"
-            android:src="@drawable/video_bg"
-            android:gravity="center"
-            android:padding="4dp"
-            android:textColor="@android:color/white"
-            android:textSize="18sp" />
-        <TextView
-            android:id="@+id/tvFinish"
-            android:text="完成 》"
-            android:textSize="14sp"
-            android:padding="8dp"
-            android:visibility="gone"
-            android:layout_marginLeft="20dp"
-            android:layout_toRightOf="@+id/tvStart"
-            android:layout_centerVertical="true"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-        <TextView
-            android:id="@+id/tvDel"
-            android:text="《 删除"
-            android:textSize="14sp"
-            android:padding="8dp"
-            android:visibility="gone"
-            android:layout_marginRight="20dp"
-            android:layout_toLeftOf="@+id/tvStart"
-            android:layout_centerVertical="true"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            <ImageView
+                android:id="@+id/imgStart"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_centerInParent="true"
+                android:src="@drawable/video_bg"
+                android:gravity="center"
+                android:padding="4dp"
+                android:textColor="@android:color/white"
+                android:textSize="18sp" />
+            <TextView
+                android:id="@+id/tvFinish"
+                android:text="完成 》"
+                android:textSize="14sp"
+                android:padding="8dp"
+                android:visibility="gone"
+                android:layout_marginLeft="20dp"
+                android:layout_toRightOf="@+id/imgStart"
+                android:layout_centerVertical="true"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+            <TextView
+                android:id="@+id/tvDel"
+                android:text="《 删除"
+                android:textSize="14sp"
+                android:padding="8dp"
+                android:visibility="gone"
+                android:layout_marginRight="20dp"
+                android:layout_toLeftOf="@+id/imgStart"
+                android:layout_centerVertical="true"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
 
-        <TextView
-            android:id="@+id/tvImport"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:padding="10dp"
-            android:text="导入"
-            android:textSize="14sp" />
-    </RelativeLayout>
+            <TextView
+                android:id="@+id/tvImport"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:padding="10dp"
+                android:text="导入"
+                android:textSize="14sp" />
+        </RelativeLayout>
+    </FrameLayout>
 </RelativeLayout>
