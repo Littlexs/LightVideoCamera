@@ -78,11 +78,9 @@ public class LightVideoActivity extends AppCompatActivity {
 
     class MyHandler extends Handler {
         WeakReference<Activity> mWeakReference;
-
         public MyHandler(Activity activity) {
             mWeakReference = new WeakReference<Activity>(activity);
         }
-
         @Override
         public void handleMessage(Message msg) {
             final LightVideoActivity activity = (LightVideoActivity) mWeakReference.get();
